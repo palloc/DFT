@@ -18,7 +18,7 @@ int main(){
 	start = clock();
 
 	//画像をread_fileに格納する
-	fp = fopen("lenna.256", "rb");
+	fp = fopen("image/lenna.256", "rb");
 	fread(read_file, sizeof(unsigned char), N*N, fp);
 	fclose(fp);
 
@@ -61,7 +61,7 @@ int main(){
 	*/
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
-			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2))*10;
+			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2));
 			read_file[i][j] = (unsigned char)Power_spectrum[i][j];
 			printf("%d,",read_file[i][j]);
 		}
@@ -76,7 +76,7 @@ int main(){
 		}
 	}
 	fclose(fp);
-	fp=fopen("lenna_F_Im.raw","wb"); //フーリエ変換後の虚部の画像
+	fp=fopen("lenna_F_Im.raw","wb+"); //フーリエ変換後の虚部の画像
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
 			fwrite(&F_Im[i][j], 1, 1, fp);
