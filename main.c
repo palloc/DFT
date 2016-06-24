@@ -6,7 +6,7 @@
 #define BLOCK_SIZE 16
 
 int main(){
-	double f_Real[N][N], F_Real[N][N], F_Im[N][N];
+	double f_Real[N][N], f_after[N][N], F_Real[N][N], F_Im[N][N];
 	int Power_spectrum[N][N];
 	unsigned char read_file[N][N];
 	FILE *fp;
@@ -28,6 +28,7 @@ int main(){
 			f_Real[i][j] = read_file[i][j];
 			F_Real[i][j] = 0;
 			F_Im[i][j] = 0;
+			f_after[i][j] = 0;
 		}
 	}
 	
@@ -61,36 +62,68 @@ int main(){
 	*/
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
-			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2));
+			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2))*15;
 			read_file[i][j] = (unsigned char)Power_spectrum[i][j];
 			printf("%d,",read_file[i][j]);
 		}
 	}
 
-	
-	//画像書き込み
-	fp=fopen("lenna_F_Re.raw","wb+"); //フーリエ変換後の実部の画像
+    /*
+	------------------
+	   画像書き込み 
+	------------------
+	*/
+	fp=fopen("image/lenna_F_Re.raw","wb+"); //フーリエ変換後の実部の画像
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
 			fwrite(&F_Real[i][j], 1, 1, fp);
 		}
 	}
 	fclose(fp);
-	fp=fopen("lenna_F_Im.raw","wb+"); //フーリエ変換後の虚部の画像
+	fp=fopen("image/lenna_F_Im.raw","wb+"); //フーリエ変換後の虚部の画像
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
 			fwrite(&F_Im[i][j], 1, 1, fp);
 		}
 	}
 	fclose(fp);
-	fp=fopen("lenna_Fourier.raw","wb+"); //フーリエ変換後のパワースペクトル
+	fp=fopen("image/lenna_Fourier.raw","wb+"); //フーリエ変換後のパワースペクトル
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
 			fwrite(&read_file[i][j], 1, 1, fp);
 		}
 	}
 	fclose(fp);
-
+	printf("----------------------\n");
+	printf("        Fin DFT       \n");
+	printf("----------------------\n");	
+	/*
+	  ----------------------------
+	      ここからIDFTの処理
+	  ----------------------------
+	*/
+	/* 実部と虚部をそれぞれ計算する */
+	//iはuを回している
+	for( i=0; i<N; i++ ){
+		//jはvを回している
+		for( j=0; j<N; j++ ){
+			//Σの計算結果
+			for( k=0; k<N; k++ ){
+				for( l=0; l<N; l++ ){
+					//u=0,1,...,N-1 v=0,1,...,N-1
+					f_after[u][v] += F_Real[k][l] * cos(2.0 * M_PI * ((double)i*k + (double)j*l) / N) / (N*N);
+				}
+			}
+		}
+	}
+	/* 画像出力 */
+	fp=fopen("image/After_IDFT.raw","wb+"); //フーリエ変換後のパワースペクトル
+	for( i=0; i<N; i++ ){
+		for( j=0; j<N; j++ ){
+			fwrite(&f_after[i][j], 1, 1, fp);
+		}
+	}
+	
 	end = clock();
 	printf("time = %lu\n",(end-start)/CLOCKS_PER_SEC);
 	return 0;
