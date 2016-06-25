@@ -12,8 +12,8 @@ int main(){
 	FILE *fp;
 	clock_t start, end;
 	int i, j, k, l, u=N/2, v=N/2;
-	double x, y, max, min;
-
+	double x, y, max[3];
+	double ratio;
 	//実行時間計測開始
 	start = clock();
 
@@ -60,14 +60,29 @@ int main(){
 	  パワースペクトル生成 
 	-------------------------
 	*/
+	max[0] = 0;
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
-			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2))*15;
+			Power_spectrum[i][j] = log10(pow(F_Real[i][j], 2)+pow(F_Im[i][j], 2));
+			//最大値を求めている(あとで正規化に使う)
+			if( max[0] < Power_spectrum[i][j] ){
+				max[0] = Power_spectrum[i][j];
+				max[1] = i;
+				max[2] = j;
+			}
+		}
+	}
+	/* データの正規化 */
+	ratio = 254 / Power_spectrum[(int)max[1]][(int)max[2]];
+	for( i=0; i<N; i++ ){
+		for( j=0; j<N; j++ ){
+			Power_spectrum[i][j] *= ratio;
 			read_file[i][j] = (unsigned char)Power_spectrum[i][j];
 			printf("%d,",read_file[i][j]);
 		}
 	}
-
+	
+		
     /*
 	------------------
 	   画像書き込み 
@@ -97,6 +112,7 @@ int main(){
 	printf("\n----------------------\n");
 	printf("        Fin DFT       \n");
 	printf("----------------------\n");	
+
 	/*
 	  ----------------------------
 	      ここからIDFTの処理
@@ -104,9 +120,11 @@ int main(){
 	*/
 	/* 実部と虚部をそれぞれ計算する */
 	//iはuを回している
-	for( i=0; i<N; i++ ){
+	for( i=-N/2; i<N/2; i++ ){
+		u = N/2 + i;		
 		//jはvを回している
-		for( j=0; j<N; j++ ){
+		for( j=-N/2; j<N/2; j++ ){
+			v = N/2 + j;			
 			//Σの計算結果
 			for( k=0; k<N; k++ ){
 				for( l=0; l<N; l++ ){
