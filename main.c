@@ -6,7 +6,7 @@
 #define BLOCK_SIZE 16
 
 int main(){
-	double f_Real[N][N], f_after[N][N], F_Real[N][N], F_Im[N][N];
+	double f_Real[N][N], f_after_R[N][N], f_after_I[N][N], F_Real[N][N], F_Im[N][N];
 	int Power_spectrum[N][N];
 	unsigned char read_file[N][N];
 	FILE *fp;
@@ -28,7 +28,8 @@ int main(){
 			f_Real[i][j] = read_file[i][j];
 			F_Real[i][j] = 0;
 			F_Im[i][j] = 0;
-			f_after[i][j] = 0;
+			f_after_R[i][j] = 0;
+			f_after_I[i][j] = 0;
 		}
 	}
 	
@@ -37,6 +38,10 @@ int main(){
 	  　ここからフーリエ変換の処理
 	  -----------------------------
 	*/
+	printf("\n----------------------\n");
+	printf("      Start DFT       \n");
+	printf("----------------------\n");	
+
 	/* 実部と虚部をそれぞれ計算する */
 	//iはuを回している
 	for( i=-N/2; i<N/2; i++ ){
@@ -78,7 +83,6 @@ int main(){
 		for( j=0; j<N; j++ ){
 			Power_spectrum[i][j] *= ratio;
 			read_file[i][j] = (unsigned char)Power_spectrum[i][j];
-			printf("%d,",read_file[i][j]);
 		}
 	}
 	
@@ -124,7 +128,7 @@ int main(){
 	/* 100*100より外を0にする理想的フィルタリング */
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
-			if( i<N/2-50 || i>N/2+50 || j<N/2-50 || j>N/2+50 ){
+			if( i<N/2-100 || i>N/2+100 || j<N/2-100 || j>N/2+100 ){
 				F_Real[i][j] = 0;
 				F_Im[i][j] = 0;
 			}
@@ -154,7 +158,7 @@ int main(){
 		for( j=0; j<N; j++ ){
 			Power_spectrum[i][j] *= ratio;
 			read_file[i][j] = (unsigned char)Power_spectrum[i][j];
-			printf("%d,",read_file[i][j]);
+
 		}
 	}
 	
@@ -178,29 +182,43 @@ int main(){
 	*/
 	/* 実部と虚部をそれぞれ計算する */
 	//iはuを回している
-	for( i=-N/2; i<N/2; i++ ){
-		u = N/2 + i;		
+	printf("\n----------------------\n");
+	printf("      Start IDFT      \n");
+	printf("----------------------\n");	
+	//iはuを回している
+	for( i=0; i<N; i++ ){
 		//jはvを回している
-		for( j=-N/2; j<N/2; j++ ){
-			v = N/2 + j;			
+		for( j=0; j<N; j++ ){
 			//Σの計算結果
 			for( k=0; k<N; k++ ){
 				for( l=0; l<N; l++ ){
 					//u=0,1,...,N-1 v=0,1,...,N-1
-					f_after[u][v] += F_Real[k][l] * cos(2.0 * M_PI * ((double)i*k + (double)j*l) / N) / N + F_Im[k][l] * sin(2.0 * M_PI * ((double)i*k + (double)j*l) / N) / N;
+					f_after_R[i][j] += F_Real[k][l] * cos(2.0 * M_PI * ((double)i*k + (double)j*l) / N) / (N*N) - F_Im[k][l] * sin(2.0 * M_PI * ((double)i*k + (double)j*l) / N) / (N*N);
 				}
 			}
 		}
 	}
+	
+	for( i=0; i<N; i++ ){
+		for( j=0; j<N; j++ ){
+			Power_spectrum[i][j] = f_after_R[i][j];
+		}
+	}
+	
 	/* 画像出力 */
 	fp=fopen("image/After_IDFT.raw","wb+"); //フーリエ変換後のパワースペクトル
 	for( i=0; i<N; i++ ){
 		for( j=0; j<N; j++ ){
-			fwrite(&f_after[i][j], 1, 1, fp);
+			fwrite(&Power_spectrum[i][j], 1, 1, fp);
 		}
 	}
 	
+	printf("\n----------------------\n");
+	printf("       Fin IDFT       \n");
+	printf("----------------------\n");	
+
+
 	end = clock();
-	printf("time = %lu\n",(end-start)/CLOCKS_PER_SEC);
+	printf("time = %lus\n",(end-start)/CLOCKS_PER_SEC);
 	return 0;
 }
